@@ -7,17 +7,21 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import com.springboot.microservice.common.ExchangeValue;
 
 @RestController
 public class CurrencyConversionController {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	@Autowired
+	private RestTemplate restTemplate;
+	
 	@Autowired
 	private CurrencyExchangeServiceProxy proxy;
 
@@ -29,14 +33,21 @@ public class CurrencyConversionController {
 		uriVariables.put("from", from);
 		uriVariables.put("to", to);
 
+		/*
 		ResponseEntity<CurrencyConversionBean> responseEntity = new RestTemplate().getForEntity(
 				"http://localhost:8000/currency-exchange/from/{from}/to/{to}", CurrencyConversionBean.class,
 				uriVariables);
 
 		CurrencyConversionBean response = responseEntity.getBody();
-
 		return new CurrencyConversionBean(response.getId(), from, to, response.getConversionMultiple(), quantity,
 				quantity.multiply(response.getConversionMultiple()), response.getPort());
+		*/
+		ExchangeValue exchangeValue = restTemplate
+				.getForObject("http://forex-service/currency-exchange/from/{from}/to/{to}", 
+						ExchangeValue.class, uriVariables);
+		return new CurrencyConversionBean(exchangeValue.getId(), from, to, exchangeValue.getConversionMultiple(), quantity,
+				quantity.multiply(exchangeValue.getConversionMultiple()), exchangeValue.getPort());
+		
 	}
 
 	@GetMapping("/currency-converter-feign/from/{from}/to/{to}/quantity/{quantity}")
